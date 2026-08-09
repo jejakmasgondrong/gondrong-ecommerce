@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatIDR } from "@/lib/format";
 import AddToCartButton from "@/components/add-to-cart-button";
+import ReviewForm from "@/components/review-form";
+import Stars from "@/components/stars";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -38,6 +40,43 @@ export default async function ProductPage({ params }: Props) {
     .maybeSingle();
 
   if (!product) notFound();
+
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id ?? null;
+
+  const { data: reviews } = await supabase
+    .from("reviews")
+    .select("id, rating, comment, created_at, author_name")
+    .eq("product_id", id)
+    .order("created_at", { ascending: false });
+
+  const { data: existingReview } = userId
+    ? await supabase
+        .from("reviews")
+        .select("id, rating, comment")
+        .eq("product_id", id)
+        .eq("user_id", userId)
+        .maybeSingle()
+    : { data: null };
+
+  // Can review only if this buyer has a paid order containing the product.
+  let canReview = false;
+  if (userId) {
+    const { data: purchased } = await supabase
+      .from("order_items")
+      .select("order_id, orders!inner(id, buyer_id, status)")
+      .eq("product_id", id)
+      .eq("orders.buyer_id", userId)
+      .in("orders.status", ["processing", "shipped", "delivered", "paid"])
+      .limit(1);
+    canReview = (purchased ?? []).length > 0;
+  }
+
+  const totalReviews = reviews?.length ?? 0;
+  const avgRating =
+    totalReviews > 0
+      ? (reviews ?? []).reduce((s, r) => s + r.rating, 0) / totalReviews
+      : null;
 
   const images = product.image_urls ?? [];
   const outOfStock = product.stock <= 0;
@@ -84,6 +123,15 @@ export default async function ProductPage({ params }: Props) {
           <p className="text-3xl font-extrabold text-primary">
             {formatIDR(product.price_cents)}
           </p>
+          {avgRating !== null && (
+            <div className="flex items-center gap-2 text-sm">
+              <Stars rating={avgRating} />
+              <span className="text-muted-foreground">
+                {avgRating.toFixed(1)} · {totalReviews} review
+                {totalReviews === 1 ? "" : "s"}
+              </span>
+            </div>
+          )}
           <p className="text-muted-foreground">{product.description}</p>
 
           <div className="flex items-center gap-2 text-sm">
@@ -101,6 +149,62 @@ export default async function ProductPage({ params }: Props) {
           {!outOfStock && <AddToCartButton productId={product.id} />}
         </div>
       </div>
+
+      {/* Reviews */}
+      <section className="mt-14">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">
+            Reviews
+            {totalReviews > 0 && (
+              <span className="ml-2 text-base font-normal text-muted-foreground">
+                ({totalReviews})
+              </span>
+            )}
+          </h2>
+          {avgRating !== null && (
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+              <Stars rating={avgRating} />
+            </div>
+          )}
+        </div>
+
+        {canReview && (
+          <ReviewForm
+            productId={product.id}
+            existingRating={existingReview?.rating ?? null}
+            existingComment={existingReview?.comment ?? ""}
+          />
+        )}
+
+        {totalReviews === 0 ? (
+          <p className="text-muted-foreground">No reviews yet.</p>
+        ) : (
+          <ul className="space-y-4">
+            {reviews?.map((r) => {
+              const name = r.author_name || "Anonymous";
+              return (
+                <li key={r.id} className="rounded-xl border p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Stars rating={r.rating} />
+                      <span className="text-sm font-medium">{name}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {r.comment && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {r.comment}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

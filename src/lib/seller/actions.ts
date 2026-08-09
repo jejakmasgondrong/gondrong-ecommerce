@@ -86,6 +86,86 @@ export async function createProduct(formData: FormData) {
   redirect("/seller");
 }
 
+export async function updateProduct(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return redirect("/login");
+
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const price = Number(formData.get("price_cents"));
+  const stock = Number(formData.get("stock"));
+  const categoryId = String(formData.get("category_id") || "");
+  const imageUrls = formData
+    .getAll("image_urls")
+    .map((v) => String(v))
+    .filter(Boolean);
+
+  if (!id || !name || !Number.isFinite(price) || price <= 0) {
+    return redirect("/seller?error=invalid");
+  }
+  if (price > MAX_PRICE_CENTS) {
+    return redirect("/seller?error=maxprice");
+  }
+  if (!Number.isInteger(stock) || stock < 0) {
+    return redirect("/seller?error=invalid");
+  }
+
+  // Only the owning seller can edit (RLS also enforces this).
+  const { data: existing } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", id)
+    .eq("seller_id", user.id)
+    .maybeSingle();
+  if (!existing) return redirect("/seller?error=failed");
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      category_id: categoryId || null,
+      name,
+      description,
+      price_cents: Math.round(price),
+      stock,
+      image_urls: imageUrls,
+    })
+    .eq("id", id);
+
+  if (error) return redirect("/seller?error=failed");
+
+  revalidatePath("/seller");
+  revalidatePath(`/products/${id}`);
+  redirect("/seller");
+}
+
+export async function deleteProduct(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return redirect("/login");
+
+  const id = String(formData.get("id") || "");
+  if (!id) return redirect("/seller?error=failed");
+
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .eq("seller_id", user.id);
+
+  if (error) return redirect("/seller?error=failed");
+
+  revalidatePath("/seller");
+  revalidatePath("/products");
+  revalidatePath("/");
+  redirect("/seller");
+}
+
 export async function updateShipmentStatus(formData: FormData) {
   const supabase = await createClient();
   const {

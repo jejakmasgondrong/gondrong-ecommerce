@@ -44,11 +44,15 @@ async function fileToWebP(file: File): Promise<Blob> {
 
 export default function ProductImageUploader({
   name = "image_urls",
+  initialImages = [],
 }: {
   name?: string;
+  initialImages?: string[];
 }) {
   const { pending } = useFormStatus();
-  const [images, setImages] = useState<UploadRow[]>([]);
+  const [images, setImages] = useState<UploadRow[]>(
+    initialImages.map((url) => ({ url, preview: url }))
+  );
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const supabase = createClient();

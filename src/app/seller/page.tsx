@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatIDR } from "@/lib/format";
 import ShipmentActions from "@/components/shipment-actions";
+import DeleteProductButton from "@/components/delete-product-button";
 
 export const metadata: Metadata = { title: "Seller Dashboard" };
 
@@ -167,6 +168,7 @@ export default async function SellerDashboardPage({
                   <th className="px-4 py-2 font-medium">Price</th>
                   <th className="px-4 py-2 font-medium">Stock</th>
                   <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,6 +190,17 @@ export default async function SellerDashboardPage({
                     <td className="px-4 py-2">{formatIDR(p.price_cents)}</td>
                     <td className="px-4 py-2">{p.stock}</td>
                     <td className="capitalize px-4 py-2">{p.status}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/seller/products/${p.id}/edit`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Edit
+                        </Link>
+                        <DeleteProductButton productId={p.id} />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
