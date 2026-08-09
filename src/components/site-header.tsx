@@ -67,7 +67,10 @@ export default async function SiteHeader() {
 
           {user && (
             <>
-              <Link href="/buyer/" className="text-sm font-medium">
+              <Link href="/cart" className="text-sm font-medium">
+                Cart
+              </Link>
+              <Link href="/orders" className="text-sm font-medium">
                 Orders
               </Link>
               {role === "seller" && (
