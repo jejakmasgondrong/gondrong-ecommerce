@@ -41,6 +41,28 @@ export default async function HomePage({
         </p>
       </section>
 
+      <section className="mb-12 grid gap-4 sm:grid-cols-3">
+        {[
+          {
+            title: "Shop",
+            body: "Browse a curated catalog of products across categories, each with photos, pricing, and stock availability.",
+          },
+          {
+            title: "Checkout",
+            body: "Add items to your cart and pay in seconds with a simulated QRIS, virtual account, or card — every new user starts with Rp 10.000.000 in ewallet credits.",
+          },
+          {
+            title: "Track",
+            body: "Watch your order move from packing to shipped to delivered, with realtime notifications and a live order timeline.",
+          },
+        ].map((f) => (
+          <div key={f.title} className="rounded-xl border p-5">
+            <h3 className="mb-1 font-semibold">{f.title}</h3>
+            <p className="text-sm text-muted-foreground">{f.body}</p>
+          </div>
+        ))}
+      </section>
+
       {params.welcome === "1" && <WelcomePopup />}
 
       {flashSale.length > 0 && (
