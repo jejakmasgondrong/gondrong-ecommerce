@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/site-header";
+import VersionBadge from "@/components/version-badge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,15 @@ export default async function RootLayout({ children }: React.PropsWithChildren) 
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>
+        <footer className="border-t">
+          <div className="mx-auto flex h-12 max-w-6xl flex-wrap items-center justify-between gap-2 px-4 text-sm text-muted-foreground">
+            <p>
+              GondrongShop — demo marketplace. Payments and shipping are
+              simulated.
+            </p>
+            <VersionBadge />
+          </div>
+        </footer>
       </body>
     </html>
   );
