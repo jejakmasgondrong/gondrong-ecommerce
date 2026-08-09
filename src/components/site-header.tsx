@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { formatIDR } from "@/lib/format";
+import NotificationBell from "@/components/notification-bell";
 
 export default async function SiteHeader() {
   const supabase = await createClient();
@@ -11,6 +12,7 @@ export default async function SiteHeader() {
 
   let balanceCents: number | null = null;
   let role: string | null = null;
+  let unread = 0;
 
   if (user) {
     const { data: profile } = await supabase
@@ -23,9 +25,15 @@ export default async function SiteHeader() {
       .select("balance_cents")
       .eq("user_id", user.id)
       .maybeSingle();
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
 
     role = profile?.role ?? "buyer";
     balanceCents = ewallet?.balance_cents ?? null;
+    unread = count ?? 0;
   }
 
   return (
@@ -67,6 +75,9 @@ export default async function SiteHeader() {
 
           {user && (
             <>
+              {user && (
+                <NotificationBell userId={user.id} initialUnread={unread} />
+              )}
               <Link href="/cart" className="text-sm font-medium">
                 Cart
               </Link>

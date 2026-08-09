@@ -85,3 +85,65 @@ export async function createProduct(formData: FormData) {
   revalidatePath("/products");
   redirect("/seller");
 }
+
+export async function updateShipmentStatus(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return redirect("/login");
+
+  const orderId = String(formData.get("order_id") || "");
+  const step = String(formData.get("step") || "");
+
+  // Verify the order belongs to this seller (RLS also enforces this).
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select("id, seller_id, buyer_id, status, order_number")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (orderError || !order || order.seller_id !== user.id) {
+    return redirect("/seller?error=failed");
+  }
+
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = {};
+
+  if (step === "packed") {
+    patch["packed_at"] = now;
+  } else if (step === "shipped") {
+    patch["shipped_at"] = now;
+  } else {
+    return redirect("/seller?error=failed");
+  }
+
+  const { error } = await supabase
+    .from("shipments")
+    .update({ ...patch })
+    .eq("order_id", orderId);
+  if (error) return redirect("/seller?error=failed");
+
+  // Keep the order status in sync.
+  const status = step === "shipped" ? "shipped" : "processing";
+  const { error: statusError } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", orderId);
+  if (statusError) return redirect("/seller?error=failed");
+
+  // Notify the buyer.
+  await supabase.from("notifications").insert({
+    user_id: order.buyer_id,
+    type: "order",
+    title:
+      step === "shipped" ? "Order shipped" : "Order being processed",
+    body:
+      step === "shipped"
+        ? `Your order ${order.order_number} is on its way.`
+        : `Your order ${order.order_number} is being packed.`,
+  });
+
+  revalidatePath("/seller");
+  revalidatePath("/orders");
+  redirect("/seller#orders");
+}

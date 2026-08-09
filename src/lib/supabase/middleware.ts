@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES: { prefix: string; role?: "seller" | "admin" }[] = [
   { prefix: "/checkout" },
   { prefix: "/cart" },
   { prefix: "/orders" },
+  { prefix: "/notifications" },
   { prefix: "/become-seller" },
   { prefix: "/seller", role: "seller" },
   { prefix: "/admin", role: "admin" },

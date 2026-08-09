@@ -15,8 +15,12 @@ const TIMELINE_MIN: Record<string, number> = {
 export function deriveOrderStatus(
   paidAt: string,
   now: number,
-  thresholds: Record<string, number> = TIMELINE_MIN
+  thresholds: Record<string, number> = TIMELINE_MIN,
+  shipment?: { packed_at: string | null; shipped_at: string | null; delivered_at: string | null } | null
 ): string {
+  if (shipment?.delivered_at) return "delivered";
+  if (shipment?.shipped_at) return "shipped";
+  if (shipment?.packed_at) return "processing";
   const elapsedMin = (now - new Date(paidAt).getTime()) / 60000;
   if (elapsedMin >= thresholds.delivered) return "delivered";
   if (elapsedMin >= thresholds.shipped) return "shipped";
@@ -64,7 +68,9 @@ export default async function OrdersPage() {
                 ? deriveOrderStatus(
                     o.paid_at ?? o.created_at,
                     // eslint-disable-next-line react-hooks/purity -- server component, per-request time is intended
-                    Date.now()
+                    Date.now(),
+                    TIMELINE_MIN,
+                    shipment
                   )
                 : o.status;
             const steps = [
