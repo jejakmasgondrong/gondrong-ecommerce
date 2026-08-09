@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s — GondrongShop",
   },
   description:
-    "A full-stack demo marketplace built with Next.js, Supabase, and Tailwind — multi-role e-commerce with simulated payments and shipping.",
+    "A full-stack demo marketplace built with Next.js, Supabase, and Tailwind. Multi-role e-commerce with simulated payments and shipping.",
 };
 
 export default async function RootLayout({ children }: React.PropsWithChildren) {

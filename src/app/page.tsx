@@ -35,9 +35,9 @@ export default async function HomePage({
           <span className="text-primary">in one place</span>
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          A multi-role marketplace — browse products, add to cart, check out
-          with simulated payments, and track your order&apos;s 5-minute shipping
-          journey. Every new account gets Rp 10.000.000 of simulated credits.
+          Browse products, add to cart, and check out with simulated payments.
+          Track your order&apos;s journey from packing to delivery in minutes.
+          Every new account starts with Rp 10.000.000 in simulated credits.
         </p>
       </section>
 
