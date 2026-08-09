@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createProduct } from "@/lib/seller/actions";
 import { formatIDR } from "@/lib/format";
+import ProductImageUploader from "@/components/product-image-uploader";
 
 export const metadata: Metadata = { title: "Add Product" };
 
@@ -57,6 +58,11 @@ export default async function NewProductPage() {
             required
             className="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Photos</label>
+          <ProductImageUploader />
         </div>
         <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-medium">

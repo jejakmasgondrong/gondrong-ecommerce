@@ -53,6 +53,10 @@ export async function createProduct(formData: FormData) {
   const price = Number(formData.get("price_cents"));
   const stock = Number(formData.get("stock"));
   const categoryId = String(formData.get("category_id") || "");
+  const imageUrls = formData
+    .getAll("image_urls")
+    .map((v) => String(v))
+    .filter(Boolean);
 
   if (!name || !Number.isFinite(price) || price <= 0) {
     return redirect("/seller?error=invalid");
@@ -71,7 +75,7 @@ export async function createProduct(formData: FormData) {
     description,
     price_cents: Math.round(price),
     stock,
-    image_urls: [],
+    image_urls: imageUrls,
     status: "active",
   });
 
